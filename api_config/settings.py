@@ -17,7 +17,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
+    "user",
 ]
 
 MIDDLEWARE = [
@@ -76,6 +78,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = "user.User"
+
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
@@ -84,7 +88,9 @@ USE_I18N = True
 
 USE_TZ = True
 
-TATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "static"
+
+STATIC_URL = "static/"
 
 MEDIA_ROOT = BASE_DIR / "media"
 

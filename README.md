@@ -4,9 +4,9 @@ A robust, scalable RESTful API built with Django and Django REST Framework (DRF)
 ### **Features**
 
 1) 🔐 Authentication & User Management
- - Secure Registration: User signup with email and password validation.
+ - Secure Registration: User signup with email and password validation. (d)
 
- - Token-Based Auth: Secure login/logout flow using Token Authentication.
+ - Token-Based Auth: Secure login/logout flow using Token Authentication. (b/u)
 
  - Profile Management: Customizable user profiles including bios, avatars, and searchable metadata.
 
@@ -37,19 +37,19 @@ A robust, scalable RESTful API built with Django and Django REST Framework (DRF)
 
 ### 🏗 API Architecture
 
-| Endpoint | Method | Description | Auth Required |
-| :--- | :--- | :--- | :---: |
-| `/api/auth/register/` | `POST` | Create a new user account | No |
-| `/api/auth/login/` | `POST` | Obtain authentication token | No |
-| `/api/auth/logout/` | `POST` | Invalidate token and sign out | Yes |
-| `/api/profiles/` | `GET/PUT` | Manage/Update your own profile | Yes |
+| Endpoint                    | Method | Description | Auth Required |
+|:----------------------------| :--- | :--- | :---: |
+| `/api/auth/register/`       | `POST` | Create a new user account | No |
+| `/api/auth/login/`          | `POST` | Obtain authentication token | No |
+| `/api/auth/logout/`         | `POST` | Invalidate token and sign out | Yes |
+| `/api/auth/me/`             | `GET/PUT` | Manage/Update your own profile | Yes |
 | `/api/profiles/{username}/` | `GET` | View another user's profile | Yes |
-| `/api/users/{id}/follow/` | `POST` | Follow/Unfollow a specific user | Yes |
-| `/api/posts/` | `GET/POST` | List personal feed or create a new post | Yes |
-| `/api/posts/{id}/` | `GET/DELETE` | Retrieve or delete a specific post | Yes |
-| `/api/posts/{id}/like/` | `POST` | Like or unlike a specific post | Yes |
+| `/api/users/{id}/follow/`   | `POST` | Follow/Unfollow a specific user | Yes |
+| `/api/posts/`               | `GET/POST` | List personal feed or create a new post | Yes |
+| `/api/posts/{id}/`          | `GET/DELETE` | Retrieve or delete a specific post | Yes |
+| `/api/posts/{id}/like/`     | `POST` | Like or unlike a specific post | Yes |
 | `/api/posts/{id}/comments/` | `GET/POST` | View or add comments to a post | Yes |
-| `/api/posts/scheduled/` | `POST` | Schedule a post for a future date | Yes |
+| `/api/posts/scheduled/`     | `POST` | Schedule a post for a future date | Yes |
 
 
 ### **Getting started:**
