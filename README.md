@@ -1,7 +1,8 @@
-Social Media API Service
+### Social Media API Service
 A robust, scalable RESTful API built with Django and Django REST Framework (DRF). This platform provides the core backend infrastructure for a social media application, featuring user authentication, social networking graphs (follow/unfollow), content creation, and asynchronous task scheduling.
 
-**Features**
+### **Features**
+
 1) 🔐 Authentication & User Management
  - Secure Registration: User signup with email and password validation.
 
@@ -27,7 +28,7 @@ A robust, scalable RESTful API built with Django and Django REST Framework (DRF)
 
  - Permissions & Security: Granular Object-Level Permissions ensuring users can only edit or delete their own content.
 
-**🛠 Tech Stack**
+### **🛠 Tech Stack**
 1. Framework: Django
 2. API Toolkit: Django REST Framework
 3. Task Queue: Celery (with Redis/RabbitMQ broker)
@@ -49,4 +50,6 @@ A robust, scalable RESTful API built with Django and Django REST Framework (DRF)
 | `/api/posts/{id}/like/` | `POST` | Like or unlike a specific post | Yes |
 | `/api/posts/{id}/comments/` | `GET/POST` | View or add comments to a post | Yes |
 | `/api/posts/scheduled/` | `POST` | Schedule a post for a future date | Yes |
-**Getting started:**
+
+
+### **Getting started:**
