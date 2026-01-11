@@ -80,6 +80,14 @@ class User(AbstractUser):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    @property
+    def get_display_name(self):
+        if self.user_name:
+            return self.user_name
+        if self.first_name:
+            return f"{self.first_name} {self.last_name or ''}".strip()
+        return self.email.split('@')[0]
+
     @staticmethod
     def get_dir_path() -> str:
         return "uploads/profile_pictures/"

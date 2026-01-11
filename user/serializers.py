@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
@@ -28,6 +27,10 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     profile_picture = serializers.ImageField(required=False)
 
+    following_list = serializers.SerializerMethodField()
+
+    followers_list = serializers.SerializerMethodField()
+
     class Meta:
         model = get_user_model()
         fields = (
@@ -37,12 +40,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "bio",
             "first_name",
             "last_name",
-            "followers",
+            "following_list",
+            "followers_list",
             "full_name",
             "user_name"
         )
-        read_only_fields = (
-            "id",
-            "full_name",
-            "followers",
-        )
+        read_only_fields = ("id", "full_name", "following_list",
+                            "followers_list")
+
+    def get_following_list(self, obj):
+        return [user.get_display_name for user in obj.followers.all()]
+
+    def get_followers_list(self, obj):
+        return [user.get_display_name for user in obj.subscribers.all()]
