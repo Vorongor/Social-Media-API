@@ -75,7 +75,6 @@ class User(AbstractUser):
         null=True,
     )
 
-
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -86,7 +85,7 @@ class User(AbstractUser):
             return self.user_name
         if self.first_name:
             return f"{self.first_name} {self.last_name or ''}".strip()
-        return self.email.split('@')[0]
+        return self.email.split("@")[0]
 
     @staticmethod
     def get_dir_path() -> str:

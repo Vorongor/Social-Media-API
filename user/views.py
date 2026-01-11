@@ -80,12 +80,6 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
         target_user = self.get_object()
         me = request.user
 
-        if target_user == me:
-            return Response(
-                {"detail": "You cannot follow yourself."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         if me.followers.filter(id=target_user.id).exists():
             me.followers.remove(target_user)
             is_followed = False
