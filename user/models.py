@@ -1,12 +1,13 @@
-from django.db import models
+from django.conf import settings
 
-# Create your models here.
 from django.contrib.auth.models import (
     AbstractUser,
     BaseUserManager,
 )
 from django.db import models
 from django.utils.translation import gettext as _
+
+from base.utils import get_path_for_image
 
 
 class UserManager(BaseUserManager):
@@ -46,6 +47,42 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     username = None
     email = models.EmailField(_("email address"), unique=True)
+    bio = models.TextField(blank=True)
+    profile_picture = models.ImageField(
+        upload_to=get_path_for_image,
+        blank=True,
+        null=True,
+    )
+    first_name = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+    )
+    last_name = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+    )
+    followers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        symmetrical=False,
+        related_name="subscribers",
+        blank=True,
+    )
+    user_name = models.CharField(
+        max_length=63,
+        blank=True,
+        null=True,
+    )
+
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    @staticmethod
+    def get_dir_path() -> str:
+        return "uploads/profile_pictures/"
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
