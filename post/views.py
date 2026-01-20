@@ -1,59 +1,80 @@
-from rest_framework import viewsets, filters, generics
+from drf_spectacular.utils import extend_schema
+from rest_framework import viewsets, filters, generics, status, mixins
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from post.models import Post
+from post.models import Post, Comment
 from post.serializers import PostSerializer, CommentSerializer
 
 
+@extend_schema(tags=["Posts"])
 class PostsViewSet(viewsets.ModelViewSet):
+    """
+    Manage blog posts.
+    Provides standard CRUD operations and additional actions for likes and comments.
+    """
     serializer_class = PostSerializer
     queryset = Post.objects.all()
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    search_fields = {
-        "title": ["icontains"],
-        "author__id": ["exact"],
-    }
+    search_fields = ["title", "author__id"]
     filterset_fields = {
         "title": ["icontains"],
         "content": ["icontains"],
-
         "published_date": ["lte", "gte"],
     }
-    ordering_fields = [
-        "title",
-        "date_posted",
-    ]
+    ordering_fields = ["title", "date_posted"]
 
     def get_queryset(self):
+        """
+        Optimized queryset with prefetch/select_related.
+        Filters out unposted items for the list action.
+        """
         queryset = self.queryset.prefetch_related(
-            "hashtags",
-            "likes",
-            "comments",
-        ).select_related(
-            "author",
-        )
+            "hashtags", "likes", "comments"
+        ).select_related("author")
+
         if self.action == "list":
-            queryset = queryset.filter(
-                is_posted=True
-            )
+            queryset = queryset.filter(is_posted=True)
         return queryset
 
     def perform_create(self, serializer):
+        """Assign the current user as the author of the post."""
         serializer.save(author=self.request.user)
 
+    @extend_schema(
+        summary="Add a comment to a post",
+        description="Creates a new comment linked to the specific post and the current authenticated user.",
+        responses={201: CommentSerializer}
+    )
     @action(
-        methods=["POST", "PUT", "PATCH", "DELETE"],
+        methods=["POST"],
         detail=True,
         serializer_class=CommentSerializer,
     )
-    def comments(self, request, *args, **kwargs):
-        pass
+    def comments(self, request, pk=None):
+        post = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(commentator=self.request.user, post=post)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        summary="Toggle like on a post",
+        description="Adds a like if not present, removes it if it already exists.",
+        responses={200: {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"},
+                "likes": {"type": "integer"}
+            }
+        }
+        }
+    )
     @action(
         methods=["POST"],
         detail=True,
@@ -62,7 +83,6 @@ class PostsViewSet(viewsets.ModelViewSet):
     def likes(self, request, *args, **kwargs):
         user = request.user
         post = self.get_object()
-        message = ""
         if post.likes.filter(id=user.id).exists():
             post.likes.remove(user)
             message = "You unliked this post"
@@ -75,40 +95,50 @@ class PostsViewSet(viewsets.ModelViewSet):
         })
 
 
+@extend_schema(tags=["Posts"])
+class CommentViewSet(mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin,
+                     viewsets.GenericViewSet):
+    """
+    Update or delete existing comments.
+    Users can only manage comments they created.
+    """
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Restrict access to comments owned by the user."""
+        return self.queryset.filter(commentator=self.request.user)
+
+
+@extend_schema(tags=["Feed"])
 class MyBlogViewSet(generics.ListAPIView):
+    """
+    List all posts created by the authenticated user.
+    """
     queryset = Post.objects.all()
     serializer_class = PostSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.filter(
-            author=self.request.user,
-        ).prefetch_related(
-            "hashtags",
-            "likes",
-            "comments",
-        ).select_related(
-            "author",
-
-        )
-        return queryset
+        return self.queryset.filter(
+            author=self.request.user
+        ).prefetch_related("hashtags", "likes", "comments").select_related(
+            "author")
 
 
+@extend_schema(tags=["Feed"])
 class SubscriptionsListView(generics.ListAPIView):
+    """
+    Feed of posts from authors that the current user follows.
+    """
     queryset = Post.objects.all()
     serializer_class = PostSerializer
 
     def get_queryset(self):
         subscriptions = self.request.user.followers.all()
-        queryset = self.queryset.filter(
+        return self.queryset.filter(
             author__in=subscriptions,
-        ).prefetch_related(
-            "hashtags",
-            "likes",
-            "comments",
-        ).select_related(
-            "author",
-
-        ).filter(
             is_posted=True
-        )
-        return queryset
+        ).prefetch_related("hashtags", "likes", "comments").select_related(
+            "author")

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 
@@ -52,8 +53,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "followers_list"
         )
 
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_following_list(self, obj):
         return [user.get_display_name for user in obj.followers.all()]
 
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_followers_list(self, obj):
         return [user.get_display_name for user in obj.subscribers.all()]

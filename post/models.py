@@ -1,5 +1,3 @@
-
-
 from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import slugify
@@ -36,13 +34,13 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @property
-    def get_short_repr(self):
-        return (f"{self.commentator.get_display_name()}"
-                f"say: {self.content[:45]}...")
+    def get_short_repr(self) -> str:
+        return (f"{self.commentator.get_display_name}"
+                f" say: {self.content[:45]}...")
 
     @property
-    def get_full_repr(self):
-        return (f"{self.commentator.get_display_name()} at {self.updated_at}"
+    def get_full_repr(self) -> str:
+        return (f"{self.commentator.get_display_name} at {self.updated_at}"
                 f"write: {self.content} ({self.hashtags})")
 
 
@@ -50,7 +48,11 @@ class Post(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField()
     is_posted = models.BooleanField(default=True)
-    planned_post_time = models.DateTimeField(default=timezone.now, blank=True, null=True)
+    planned_post_time = models.DateTimeField(
+        default=timezone.now,
+        blank=True,
+        null=True
+    )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

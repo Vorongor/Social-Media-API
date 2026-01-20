@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -10,12 +11,30 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from user.serializers import UserSerializer, UserProfileSerializer
 
 
+@extend_schema(tags=["Authentication"])
 class CreateUserView(generics.CreateAPIView):
+    """Register a new user in the system."""
+    authentication_classes = []
     permission_classes = (AllowAny,)
     serializer_class = UserSerializer
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary="Get current user profile",
+        tags=["User Profile"]
+    ),
+    put=extend_schema(
+        summary="Update current user profile (Full)",
+        tags=["User Profile"]
+    ),
+    patch=extend_schema(
+        summary="Update current user profile (Partial)",
+        tags=["User Profile"]
+    ),
+)
 class ManageUserView(generics.RetrieveUpdateAPIView):
+    """Manage the authenticated user's own profile and account data."""
     serializer_class = UserProfileSerializer
     authentication_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -25,10 +44,10 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
+@extend_schema(tags=["Social"], summary="List users I follow")
 class FollowingListView(generics.ListAPIView):
-    """
-    List of users that the current user is FOLLOWING.
-    """
+    """Returns a list of users that the current
+    authenticated user is following."""
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
@@ -37,10 +56,10 @@ class FollowingListView(generics.ListAPIView):
             "subscribers", "followers")
 
 
+@extend_schema(tags=["Social"], summary="List my subscribers")
 class SubscribeListView(generics.ListAPIView):
-    """
-    List of users that are following the current user (SUBSCRIBERS).
-    """
+    """Returns a list of users who are
+    following the current authenticated user."""
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
@@ -49,9 +68,19 @@ class SubscribeListView(generics.ListAPIView):
             "subscribers", "followers")
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Search and list user profiles",
+        tags=["User Profile"]
+    ),
+    retrieve=extend_schema(
+        summary="Get specific user profile",
+        tags=["User Profile"]
+    ),
+)
 class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for viewing and searching user profiles, and following/unfollowing.
+    View and search all user profiles except your own.
     """
     queryset = get_user_model().objects.all()
     serializer_class = UserProfileSerializer
@@ -71,6 +100,16 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
         me = self.request.user
         return queryset.exclude(id=me.id)
 
+    @extend_schema(
+        tags=["Social"],
+        summary="Follow/Unfollow a user",
+        description="Toggle following status for a specific user by ID.",
+        responses={200: {"type": "object", "properties": {
+            "user": {"type": "string"},
+            "is_followed": {"type": "boolean"},
+            "followers_count": {"type": "integer"}
+        }}}
+    )
     @action(
         methods=["POST"],
         detail=True,

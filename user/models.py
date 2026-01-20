@@ -76,11 +76,11 @@ class User(AbstractUser):
     )
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
     @property
-    def get_display_name(self):
+    def get_display_name(self) -> str:
         if self.user_name:
             return self.user_name
         if self.first_name:

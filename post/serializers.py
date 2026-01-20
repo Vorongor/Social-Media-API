@@ -25,6 +25,7 @@ class PostSerializer(serializers.ModelSerializer):
         slug_field="get_display_name"
     )
     likes = serializers.IntegerField(
+        read_only=True,
         source="likes.count",
     )
 
@@ -44,6 +45,8 @@ class PostSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "id",
+            "likes",
+            "comments",
             "author"
         )
 
@@ -99,7 +102,4 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "content",
-            "commentator",
-            "post",
-
         )
