@@ -45,8 +45,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "full_name",
             "user_name"
         )
-        read_only_fields = ("id", "full_name", "following_list",
-                            "followers_list")
+        read_only_fields = (
+            "id",
+            "full_name",
+            "following_list",
+            "followers_list"
+        )
 
     def get_following_list(self, obj):
         return [user.get_display_name for user in obj.followers.all()]
