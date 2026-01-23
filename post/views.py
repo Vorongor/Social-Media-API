@@ -40,6 +40,14 @@ class PostsViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             queryset = queryset.filter(is_posted=True)
+        if self.action in ["update", "partial_update", "destroy"]:
+            queryset = queryset.filter(
+                author=self.request.user
+            )
+        if self.action == "liked-posts":
+            queryset = queryset.filter(
+                likes=self.request.user
+            ).distinct()
         return queryset
 
     def perform_create(self, serializer):
@@ -96,6 +104,18 @@ class PostsViewSet(viewsets.ModelViewSet):
             "message": message,
             "likes": post.likes.count()
         })
+
+    @extend_schema(
+        summary="List all liked posts.",
+        description="Retrieve list of liked posts",
+    )
+    @action(
+        methods=["GET"],
+        detail=False,
+        name="liked-posts",
+    )
+    def liked_posts(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 @extend_schema(tags=["Posts"])
