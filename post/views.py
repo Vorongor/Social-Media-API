@@ -12,7 +12,8 @@ from post.serializers import PostSerializer, CommentSerializer
 class PostsViewSet(viewsets.ModelViewSet):
     """
     Manage blog posts.
-    Provides standard CRUD operations and additional actions for likes and comments.
+    Provides standard CRUD operations
+    and additional actions for likes and comments.
     """
     serializer_class = PostSerializer
     queryset = Post.objects.all()
@@ -47,7 +48,8 @@ class PostsViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Add a comment to a post",
-        description="Creates a new comment linked to the specific post and the current authenticated user.",
+        description="Creates a new comment linked to the "
+                    "specific post and the current authenticated user.",
         responses={201: CommentSerializer}
     )
     @action(
@@ -64,7 +66,8 @@ class PostsViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Toggle like on a post",
-        description="Adds a like if not present, removes it if it already exists.",
+        description="Adds a like if not present, "
+                    "removes it if it already exists.",
         responses={200: {
             "type": "object",
             "properties": {
@@ -96,7 +99,8 @@ class PostsViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(tags=["Posts"])
-class CommentViewSet(mixins.UpdateModelMixin,
+class CommentViewSet(mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
                      mixins.DestroyModelMixin,
                      viewsets.GenericViewSet):
     """
@@ -109,7 +113,11 @@ class CommentViewSet(mixins.UpdateModelMixin,
 
     def get_queryset(self):
         """Restrict access to comments owned by the user."""
-        return self.queryset.filter(commentator=self.request.user)
+        post_id = self.kwargs.get("post_id")
+        return self.queryset.filter(
+            commentator=self.request.user,
+            post__id=post_id,
+        )
 
 
 @extend_schema(tags=["Feed"])

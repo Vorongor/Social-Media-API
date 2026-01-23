@@ -9,10 +9,13 @@ click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
 colorama==0.4.6
-Django==6.0.1
+cron_descriptor==2.0.6
+Django==5.2.10
+django-celery-beat==2.8.1
 django-debug-toolbar==4.4.6
 django-filter==25.2
 django-rest-framework==0.1.0
+django-timezone-field==7.2.1
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 drf-spectacular==0.27.2
@@ -35,6 +38,7 @@ psycopg2-binary==2.9.10
 pycodestyle==2.12.1
 pyflakes==3.2.0
 PyJWT==2.10.1
+python-crontab==3.3.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 pytokens==0.3.0
@@ -45,6 +49,7 @@ rpds-py==0.22.3
 setuptools==75.6.0
 six==1.17.0
 sqlparse==0.5.3
+typing_extensions==4.15.0
 tzdata==2025.3
 tzlocal==5.3.1
 uritemplate==4.1.1

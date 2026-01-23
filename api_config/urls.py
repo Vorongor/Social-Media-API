@@ -17,14 +17,18 @@ urlpatterns = [
     path(
         "api/docs/swagger/",
         SpectacularSwaggerView.as_view(
-            authentication_classes=[], permission_classes=[AllowAny], url_name="schema"
+            authentication_classes=[],
+            permission_classes=[AllowAny],
+            url_name="schema"
         ),
         name="swagger-ui",
     ),
     path(
         "api/docs/redoc/",
         SpectacularRedocView.as_view(
-            authentication_classes=[], permission_classes=[AllowAny], url_name="schema"
+            authentication_classes=[],
+            permission_classes=[AllowAny],
+            url_name="schema"
         ),
         name="redoc",
     ),

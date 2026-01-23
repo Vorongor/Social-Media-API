@@ -35,8 +35,11 @@ class Comment(models.Model):
 
     @property
     def get_short_repr(self) -> str:
+
         return (f"{self.commentator.get_display_name}"
-                f" say: {self.content[:45]}...")
+                f" say: {self.content[:45] if (
+                    len(self.content) > 45
+                ) else self.content}...")
 
     @property
     def get_full_repr(self) -> str:
