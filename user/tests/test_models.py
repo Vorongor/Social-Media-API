@@ -80,5 +80,5 @@ class UserModelTestCase(TestCase):
     def test_get_dir_path_static_method(self):
         self.assertEqual(
             User.get_dir_path(),
-            "uploads/profile_pictures/"
+            "/profile_pictures/"
         )

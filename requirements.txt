@@ -4,14 +4,18 @@ attrs==25.1.0
 billiard==4.2.4
 black==25.12.0
 celery==5.6.2
+certifi==2026.1.4
+charset-normalizer==3.4.4
 click==8.3.1
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
+cloudinary==1.44.1
 colorama==0.4.6
 cron_descriptor==2.0.6
 Django==5.2.10
 django-celery-beat==2.8.1
+django-cloudinary-storage==0.3.0
 django-debug-toolbar==4.4.6
 django-filter==25.2
 django-rest-framework==0.1.0
@@ -22,6 +26,7 @@ drf-spectacular==0.27.2
 flake8==7.1.1
 flake8-quotes==3.4.0
 flake8-variables-names==0.0.6
+idna==3.11
 inflection==0.5.1
 jsonschema==4.23.0
 jsonschema-specifications==2024.10.1
@@ -45,6 +50,7 @@ pytokens==0.3.0
 PyYAML==6.0.2
 redis==7.1.0
 referencing==0.35.1
+requests==2.32.5
 rpds-py==0.22.3
 setuptools==75.6.0
 six==1.17.0
@@ -53,5 +59,6 @@ typing_extensions==4.15.0
 tzdata==2025.3
 tzlocal==5.3.1
 uritemplate==4.1.1
+urllib3==2.6.3
 vine==5.1.0
 wcwidth==0.2.14

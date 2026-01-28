@@ -1,3 +1,4 @@
+from cloudinary.models import CloudinaryField
 from django.conf import settings
 from django.db import models
 from django.template.defaultfilters import slugify
@@ -35,10 +36,9 @@ class Comment(models.Model):
 
     @property
     def get_short_repr(self) -> str:
-
         return (f"{self.commentator.get_display_name}"
                 f" say: {self.content[:45] if (
-                    len(self.content) > 45
+                        len(self.content) > 45
                 ) else self.content}...")
 
     @property
@@ -61,8 +61,8 @@ class Post(models.Model):
         on_delete=models.CASCADE,
         related_name="posts"
     )
-    image = models.ImageField(
-        upload_to=get_path_for_image,
+    image = CloudinaryField(
+        "post_image",
         blank=True,
         null=True,
     )
@@ -70,11 +70,6 @@ class Post(models.Model):
         Hashtag,
         blank=True,
         related_name="posts"
-    )
-    likes = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        blank=True,
-        related_name="liked_posts"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -85,8 +80,33 @@ class Post(models.Model):
 
     @staticmethod
     def get_dir_path() -> str:
-        return "uploads/post_images/"
+        return "/post_images/"
 
     @property
     def get_image_name(self):
         return f"post-{slugify(self.title)[:20]}"
+
+
+class PostReaction(models.Model):
+    class ReactionType(models.TextChoices):
+        LIKE = "like", "Like"
+        DISLIKE = "dislike", "Dislike"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="post_reactions",
+    )
+    post = models.ForeignKey(
+        "Post",
+        on_delete=models.CASCADE,
+        related_name="reactions",
+    )
+    reaction = models.CharField(
+        max_length=10,
+        choices=ReactionType.choices,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "post")

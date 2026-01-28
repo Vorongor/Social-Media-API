@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from post.models import Post, Comment, Hashtag
+from post.models import Post, Comment, Hashtag, PostReaction
 
 
 class CreatableSlugRelatedField(serializers.SlugRelatedField):
@@ -24,10 +24,8 @@ class PostSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field="get_display_name"
     )
-    likes = serializers.IntegerField(
-        read_only=True,
-        source="likes.count",
-    )
+    likes = serializers.IntegerField(read_only=True)
+    dislikes = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Post
@@ -38,6 +36,7 @@ class PostSerializer(serializers.ModelSerializer):
             "is_posted",
             "planned_post_time",
             "likes",
+            "dislikes",
             "author",
             "image",
             "comments",
@@ -46,6 +45,7 @@ class PostSerializer(serializers.ModelSerializer):
         read_only_fields = (
             "id",
             "likes",
+            "dislikes",
             "comments",
             "author"
         )
@@ -103,3 +103,9 @@ class CommentSerializer(serializers.ModelSerializer):
             "id",
             "content",
         )
+
+
+class PostReactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostReaction
+        fields = ("reaction",)

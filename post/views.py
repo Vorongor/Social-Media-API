@@ -1,57 +1,68 @@
+from django.db.models import Count, Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, filters, generics, status, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from post.models import Post, Comment
+from post.models import Post, Comment, PostReaction
 from post.serializers import PostSerializer, CommentSerializer
 
 
 @extend_schema(tags=["Posts"])
 class PostsViewSet(viewsets.ModelViewSet):
-    """
-    Manage blog posts.
-    Provides standard CRUD operations
-    and additional actions for likes and comments.
-    """
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+    permission_classes = [IsAuthenticated]
+
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
     search_fields = ["title", "author__id"]
-    filterset_fields = {
-        "title": ["icontains"],
-        "content": ["icontains"],
-        "published_date": ["lte", "gte"],
-    }
     ordering_fields = ["title", "date_posted"]
 
     def get_queryset(self):
-        """
-        Optimized queryset with prefetch/select_related.
-        Filters out unposted items for the list action.
-        """
-        queryset = self.queryset.prefetch_related(
-            "hashtags", "likes", "comments"
-        ).select_related("author")
+        queryset = (
+            Post.objects
+            .select_related("author")
+            .prefetch_related("hashtags", "comments")
+            .annotate(
+                likes=Count(
+                    "reactions",
+                    filter=Q(
+                        reactions__reaction=PostReaction.ReactionType.LIKE
+                    ),
+                ),
+                dislikes=Count(
+                    "reactions",
+                    filter=Q(
+                        reactions__reaction=PostReaction.ReactionType.DISLIKE
+                    ),
+                ),
+            )
+        )
 
         if self.action == "list":
             queryset = queryset.filter(is_posted=True)
+
         if self.action in ["update", "partial_update", "destroy"]:
+            queryset = queryset.filter(author=self.request.user)
+
+        if self.action == "liked_posts":
             queryset = queryset.filter(
-                author=self.request.user
-            )
-        if self.action == "liked-posts":
-            queryset = queryset.filter(
-                likes=self.request.user
+                reactions__user=self.request.user,
+                reactions__reaction=PostReaction.ReactionType.LIKE,
             ).distinct()
+
+        if self.action == "disliked_posts":
+            queryset = queryset.filter(
+                reactions__user=self.request.user,
+                reactions__reaction=PostReaction.ReactionType.DISLIKE,
+            ).distinct()
+
         return queryset
 
     def perform_create(self, serializer):
-        """Assign the current user as the author of the post."""
         serializer.save(author=self.request.user)
 
     @extend_schema(
@@ -73,49 +84,78 @@ class PostsViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
-        summary="Toggle like on a post",
-        description="Adds a like if not present, "
-                    "removes it if it already exists.",
-        responses={200: {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"},
-                "likes": {"type": "integer"}
-            }
-        }
-        }
+        summary="React to a post",
+        description="Toggle like or dislike on a post",
     )
     @action(
         methods=["POST"],
         detail=True,
-        name="like",
+        url_path="react",
     )
-    def likes(self, request, *args, **kwargs):
-        user = request.user
+    def react(self, request, pk=None):
+        reaction_type = request.data.get("reaction")
+
+        if reaction_type not in PostReaction.ReactionType.values:
+            return Response(
+                {"detail": "Invalid reaction type"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         post = self.get_object()
-        if post.likes.filter(id=user.id).exists():
-            post.likes.remove(user)
-            message = "You unliked this post"
+        user = request.user
+
+        reaction, created = PostReaction.objects.get_or_create(
+            user=user,
+            post=post,
+            defaults={"reaction": reaction_type},
+        )
+
+        if not created:
+            if reaction.reaction == reaction_type:
+                reaction.delete()
+                message = "Reaction removed"
+            else:
+                reaction.reaction = reaction_type
+                reaction.save(update_fields=["reaction"])
+                message = "Reaction updated"
         else:
-            post.likes.add(user)
-            message = "You liked this post"
-        return Response({
-            "message": message,
-            "likes": post.likes.count()
-        })
+            message = "Reaction added"
+
+        return Response(
+            {
+                "message": message,
+                "likes": PostReaction.objects.filter(
+                    post=post,
+                    reaction=PostReaction.ReactionType.LIKE,
+                ).count(),
+                "dislikes": PostReaction.objects.filter(
+                    post=post,
+                    reaction=PostReaction.ReactionType.DISLIKE,
+                ).count(),
+            }
+        )
 
     @extend_schema(
-        summary="List all liked posts.",
-        description="Retrieve list of liked posts",
+        summary="List all liked posts",
     )
     @action(
         methods=["GET"],
         detail=False,
-        name="liked-posts",
+        url_path="liked-posts",
     )
-    def liked_posts(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+    def liked_posts(self, request):
+        return self.list(request)
+
+    @extend_schema(
+        summary="List all liked posts",
+    )
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path="disliked_posts",
+    )
+    def disliked_posts(self, request):
+        return self.list(request)
 
 
 @extend_schema(tags=["Posts"])
@@ -149,10 +189,10 @@ class MyBlogViewSet(generics.ListAPIView):
     serializer_class = PostSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(
+        return (self.queryset.filter(
             author=self.request.user
-        ).prefetch_related("hashtags", "likes", "comments").select_related(
-            "author")
+        ).prefetch_related("hashtags", "reactions", "comments")
+        .select_related("author"))
 
 
 @extend_schema(tags=["Feed"])
@@ -165,8 +205,8 @@ class SubscriptionsListView(generics.ListAPIView):
 
     def get_queryset(self):
         subscriptions = self.request.user.followers.all()
-        return self.queryset.filter(
+        return (self.queryset.filter(
             author__in=subscriptions,
             is_posted=True
-        ).prefetch_related("hashtags", "likes", "comments").select_related(
-            "author")
+        ).prefetch_related("hashtags", "reactions", "comments")
+        .select_related("author"))
